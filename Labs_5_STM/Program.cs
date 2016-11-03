@@ -10,6 +10,11 @@ namespace Labs_5_STM
   {
     static void Main(string[] args)
     {
+      var s = new StmRef<int>(5);
+      Stm.Do(() =>
+      {
+        s.Value = 6;
+      });
     }
   }
 }
