@@ -48,8 +48,13 @@ namespace Labs_5_STM
       Stack<IStmCompositeTransaction> stackTransaction;
       threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction);
       stackTransaction.Pop();
-      foreach (var commitBlock in commitKeyValues)
-        stackTransaction.Peek().TryAddComponent(commitBlock.Key, commitBlock.Value);
+      if (stackTransaction.Count != 0)
+      {
+        foreach (var commitBlock in commitKeyValues)
+          stackTransaction.Peek().TryAddComponent(commitBlock.Key, commitBlock.Value);
+      }
+      else
+        threadTransactions.TryRemove(CurrentThreadId, out stackTransaction);
     }
 
     public static void Do(Action operation)

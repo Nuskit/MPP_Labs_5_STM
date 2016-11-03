@@ -43,10 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IStmComposite.cs" />
-    <Compile Include="IStmCompositeTransaction.cs" />
     <Compile Include="IStmRef.cs" />
     <Compile Include="IStmTransaction.cs" />
+    <Compile Include="LoggerStmTransaction.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Stm.cs" />

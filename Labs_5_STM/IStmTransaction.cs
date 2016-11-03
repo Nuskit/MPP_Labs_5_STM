@@ -11,5 +11,6 @@ namespace Labs_5_STM
     void Begin();
     void Commit();
     void Rollback();
+    void TryAddComponent(IStmRef stmRef, StmRefSavedState stmRefSavedState);
   }
 }

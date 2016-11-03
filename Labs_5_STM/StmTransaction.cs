@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Labs_5_STM
 {
 
-  public class StmTransaction : IStmCompositeTransaction
+  public class StmTransaction : IStmTransaction
   {
     private Dictionary<IStmRef, Queue<StmRefSavedState>> components = new Dictionary<IStmRef, Queue<StmRefSavedState>>();
 

@@ -18,8 +18,8 @@ namespace Labs_5_STM
     }
   }
 
-  public class StmRef<T>: IStmRef
-    where T:struct
+  public class StmRef<T> : IStmRef
+    where T : struct
   {
     private T value;
 
@@ -77,7 +77,12 @@ namespace Labs_5_STM
 
     public override int GetHashCode()
     {
-      return base.GetHashCode() + 7*value.GetHashCode();
+      return base.GetHashCode() + 7 * value.GetHashCode();
+    }
+
+    public override string ToString()
+    {
+      return String.Format("Current value {0}.", value.ToString());
     }
   }
 }
