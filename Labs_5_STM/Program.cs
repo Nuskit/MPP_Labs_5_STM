@@ -13,7 +13,7 @@ namespace Labs_5_STM
       var s = new StmRef<int>(5);
       Stm.Do(() =>
       {
-        s.Value = 6;
+        s.Set(6);
       });
     }
   }

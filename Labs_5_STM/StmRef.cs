@@ -6,61 +6,78 @@ using System.Threading.Tasks;
 
 namespace Labs_5_STM
 {
-  public enum StmOperationType
+  public class StmRefSavedState
   {
-    GET, SET
-  };
-
-  class StmRefSavedState
-  {
-    public StmOperationType OperationType { get; set; }
     public IStmRef SaveStmRef { get; set; }
-    public IStmTransaction ParentTransaction { get; set; }
+    public IStmRef NextStmRef { get; set; }
 
-    public StmRefSavedState(IStmRef saveStmRef,IStmTransaction parentTransaction, StmOperationType operationType)
+    public StmRefSavedState(IStmRef saveStmRef, IStmRef nextStmRef)
     {
-      this.OperationType = operationType;
-      this.ParentTransaction = parentTransaction;
-      this.SaveStmRef = saveStmRef.Clone() as IStmRef;
+      this.NextStmRef = nextStmRef ?? saveStmRef;
+      this.SaveStmRef = saveStmRef;
     }
   }
 
-  public class StmRef<T>: IStmCompositeRef
+  public class StmRef<T>: IStmRef
     where T:struct
   {
     private T value;
-    public T Value
-    {
-      get
-      {
-        Stm.RegisterStmOperation(this, StmOperationType.GET);
-        return value;
-      }
-      set
-      {
-        //don't change object
-        if (!this.value.Equals(value))
-          Stm.RegisterStmOperation(this, StmOperationType.SET);
-
-        this.value = value;
-      }
-    }
 
     public StmRef(T value)
     {
-      this.Value = value;
+      this.value = value;
     }
 
     public StmRef() { }
 
     public object Clone()
     {
-      return new StmRef<T>(Value);
+      return new StmRef<T>(value);
     }
 
-    public bool IsCorrectnessTransaction()
+    public T Get()
     {
-      return Stm.IsCorrectRefState(this);
+      var oldValue = this.Clone() as StmRef<T>;
+      Stm.RegisterStmOperation(this, oldValue);
+      return oldValue.value;
+    }
+
+    public void Set(T value)
+    {
+      var oldValue = this.Clone() as StmRef<T>;
+      Stm.RegisterStmOperation(this, oldValue, new StmRef<T>(value));
+      this.value = value;
+    }
+
+    public void SetAsObject(object value)
+    {
+      if (value is T)
+        this.value = (T)value;
+      else
+        throw new ArgumentException("Error value type");
+    }
+
+    public object GetAsObject()
+    {
+      return value;
+    }
+
+    public override bool Equals(object value)
+    {
+      if (ReferenceEquals(this, value))
+        return true;
+      if (!(value is StmRef<T>))
+        return false;
+
+      StmRef<T> stmRef = value as StmRef<T>;
+      if (!this.value.Equals(stmRef.value))
+        return false;
+      return true;
+    }
+
+    public override int GetHashCode()
+    {
+      return base.GetHashCode() + 7*value.GetHashCode();
     }
   }
 }

@@ -8,6 +8,6 @@ namespace Labs_5_STM
 {
   public interface IStmCompositeTransaction: IStmTransaction, IStmComposite
   {
-    void TryAddComponent(IStmComposite sourse);
+    void TryAddComponent(IStmRef stmRef, StmRefSavedState stmRefSavedState);
   }
 }

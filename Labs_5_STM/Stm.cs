@@ -21,9 +21,8 @@ namespace Labs_5_STM
       public Action Operation { get; set; }
       public int? ParentThreadOperation { get; set; }
     }
-
-    static ConcurrentDictionary<int, IStmCompositeTransaction> threadTransactions = new ConcurrentDictionary<int, IStmCompositeTransaction>();
-    static ConcurrentDictionary<IStmRef, ConcurrentStack<StmRefSavedState>> stackSavedState = new ConcurrentDictionary<IStmRef, ConcurrentStack<StmRefSavedState>>();
+    
+    static ConcurrentDictionary<int, Stack<IStmCompositeTransaction>> threadTransactions = new ConcurrentDictionary<int, Stack<IStmCompositeTransaction>>();
 
     static private IStmCompositeTransaction CreateNewTransaction()
     {
@@ -38,94 +37,42 @@ namespace Labs_5_STM
       }
     }
 
-    public static void BeginTransaction(IStmCompositeTransaction transaction, int? parentThreadOperation)
+    public static void NotifyBeginTransaction(IStmCompositeTransaction transaction)
     {
-      var listTrancation = threadTransactions.GetOrAdd(CurrentThreadId, transaction);
-      if (parentThreadOperation != null)
-        threadTransactions.Single(x => x.Key == parentThreadOperation).Value.TryAddComponent(transaction);
+      var stackTransaction = threadTransactions.GetOrAdd(CurrentThreadId, new Stack<IStmCompositeTransaction>());
+      stackTransaction.Push(transaction);
     }
 
-    public static void RemoveSavedState(IStmCompositeTransaction transaction, IStmRef component)
+    public static void NotifyEndTransaction(IEnumerable<KeyValuePair<IStmRef, StmRefSavedState>> commitKeyValues)
     {
-      ConcurrentStack<StmRefSavedState> stackTransactionSavedState;
-      stackSavedState.TryGetValue(component, out stackTransactionSavedState);
-      stackTransactionSavedState.TryPopRange(stackTransactionSavedState.Where(x => x.ParentTransaction.Equals(transaction)).ToArray());
+      Stack<IStmCompositeTransaction> stackTransaction;
+      threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction);
+      stackTransaction.Pop();
+      foreach (var commitBlock in commitKeyValues)
+        stackTransaction.Peek().TryAddComponent(commitBlock.Key, commitBlock.Value);
     }
 
-    private static void threadCall(object state)
+    public static void Do(Action operation)
     {
-      ThreadInformation threadInformation = state as ThreadInformation;
       bool isCompleteTransaction = false;
       var transaction = CreateNewTransaction();
-      BeginTransaction(transaction, threadInformation.ParentThreadOperation);
-      //
-      //use as method and call in Begin      
-      //
-
-      //
       transaction.Begin();
       do
       {
-        threadInformation.Operation.Invoke();
+        operation.Invoke();
         if (transaction.IsCorrectnessTransaction())
           isCompleteTransaction = true;
         else
           transaction.Rollback();
       } while (!isCompleteTransaction);
-      if (threadInformation.ParentThreadOperation == null)
-        transaction.Commit();
+      transaction.Commit();
     }
 
-    public static void Do(Action operation)
+    public static void RegisterStmOperation(IStmRef sourse, IStmRef oldStmRef, IStmRef newStmRef = null)
     {
-      ThreadPool.QueueUserWorkItem(threadCall, new ThreadInformation(operation, isNestedOperation() ? CurrentThreadId : (int?)null));
-    }
-
-    private static bool isNestedOperation()
-    {
-      IStmCompositeTransaction checkedTransaction;
-      return threadTransactions.TryGetValue(CurrentThreadId, out checkedTransaction);
-    }
-
-    public static void RegisterStmOperation(IStmCompositeRef sourse, StmOperationType operationType)
-    {
-      IStmCompositeTransaction currentTransaction;
-      threadTransactions.TryGetValue(CurrentThreadId, out currentTransaction);
-      currentTransaction.TryAddComponent(sourse);
-      var currentStmRefStack = stackSavedState.GetOrAdd(sourse, new ConcurrentStack<StmRefSavedState>());
-      currentStmRefStack.Push(new StmRefSavedState(sourse, currentTransaction, operationType));
-    }
-
-    private static IEnumerable<StmRefSavedState> GetFirstSavedState(ConcurrentStack<StmRefSavedState> stack, IStmTransaction transaction)
-    {
-      return stack.SkipWhile(x => x.ParentTransaction.Equals(transaction));
-    }
-
-    private static StmRefSavedState GetLastSavedState(ConcurrentStack<StmRefSavedState> stack, IStmTransaction transaction)
-    {
-      return stack.Last(x => x.ParentTransaction.Equals(transaction));
-    }
-
-    public static bool IsCorrectRefState(IStmRef stmRef)
-    {
-      var currentStackSavedState = stackSavedState.Single(x => x.Key.Equals(stmRef)).Value;
-      var currentTransaction = threadTransactions.Single(x => x.Key == CurrentThreadId).Value;
-      var firstSavedState = GetFirstSavedState(currentStackSavedState, currentTransaction);
-      var lastSavedState = GetLastSavedState(currentStackSavedState, currentTransaction);
-      foreach (var savedState in firstSavedState)
-      {
-        if (!savedState.ParentTransaction.Equals(currentTransaction) && savedState.OperationType == StmOperationType.SET)
-          return false;
-        else if (savedState.Equals(lastSavedState))
-          break;
-      }
-      return true;
-    }
-
-    public static void RollBackTransaction(IStmTransaction transaction)
-    {
-      var s=stackSavedState.Select(x => x.Value.Where(y => y.ParentTransaction.Equals(transaction)));
-      //s.First(x=>x.)
+      Stack<IStmCompositeTransaction> stackTransaction;
+      threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction);
+      stackTransaction.Peek().TryAddComponent(sourse, new StmRefSavedState(oldStmRef, newStmRef));
     }
   }
 }

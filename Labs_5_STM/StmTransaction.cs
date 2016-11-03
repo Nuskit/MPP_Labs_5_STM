@@ -8,39 +8,65 @@ namespace Labs_5_STM
 {
 
   public class StmTransaction : IStmCompositeTransaction
-  { 
-    private List<IStmComposite> components = new List<IStmComposite>();
+  {
+    private Dictionary<IStmRef, Queue<StmRefSavedState>> components = new Dictionary<IStmRef, Queue<StmRefSavedState>>();
 
-    public void TryAddComponent(IStmComposite sourse)
+    public void TryAddComponent(IStmRef stmRef, StmRefSavedState stmRefSavedState)
     {
-      if (!components.Contains(sourse))
-        components.Add(sourse);
+      Queue<StmRefSavedState> refSavedState;
+      if (components.TryGetValue(stmRef, out refSavedState))
+        refSavedState.Enqueue(stmRefSavedState);
+      else
+        components.Add(stmRef, new Queue<StmRefSavedState>(new[] { stmRefSavedState }));
     }
 
     public void Begin()
     {
-      //may be this create new Pull
+      Stm.NotifyBeginTransaction(this);
     }
 
     public void Commit()
     {
-      foreach (var component in components)
-        if (component is IStmRef)
-          Stm.RemoveSavedState(this, component as IStmRef);
-        else if (component is IStmTransaction)
-          (component as IStmTransaction).Commit();
+      Stm.NotifyEndTransaction(components.Select(x => new KeyValuePair<IStmRef, StmRefSavedState>(x.Key, GetCommitValue(x.Key))));
+      ClearComponents();
+    }
+
+    private void ClearComponents()
+    {
+      components.Clear();
+    }
+
+    private StmRefSavedState GetCommitValue(IStmRef key)
+    {
+      var keyValues = components.Single(x => x.Key.Equals(key)).Value;
+      return new StmRefSavedState(keyValues.First().SaveStmRef, keyValues.Last().NextStmRef);
     }
 
     public void Rollback()
     {
-      Stm.RollBackTransaction(this);
+      foreach (var component in components)
+        component.Key.SetAsObject(component.Value);
+      ClearComponents();
     }
 
     public bool IsCorrectnessTransaction()
     {
-      foreach (var component in components)
-        if (!component.IsCorrectnessTransaction())
+      foreach (var component in components.Values)
+        if (!isCorrectStmRef(component))
           return false;
+      return true;
+    }
+
+    private bool isCorrectStmRef(Queue<StmRefSavedState> refSavedStates)
+    {
+      StmRefSavedState lastSavedState = refSavedStates.First();
+      foreach (var currentSavedState in refSavedStates.Skip(1))
+      {
+        if (currentSavedState.SaveStmRef.Equals(lastSavedState.NextStmRef))
+          lastSavedState = currentSavedState;
+        else
+          return false;
+      }
       return true;
     }
   }

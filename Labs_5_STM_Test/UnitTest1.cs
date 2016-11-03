@@ -14,16 +14,16 @@ namespace Labs_5_STM_Test
       var variable = new StmRef<int>();
       var task1 = Task.Run(() =>
       {
-        variable.Value = 2;
+        variable.Set(2);
       });
 
       var task2 = Task.Run(() =>
       {
-        variable.Value = 3;
+        variable.Set(3);
       });
       task1.Wait();
       task2.Wait();
-      Assert.IsTrue(variable.Value == 2 || variable.Value == 3);
+      Assert.IsTrue(variable.Get()==2|| variable.Get()==3);
     }
   }
 }
