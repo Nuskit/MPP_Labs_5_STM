@@ -22,9 +22,9 @@ namespace Labs_5_STM
       public int? ParentThreadOperation { get; set; }
     }
     
-    static ConcurrentDictionary<int, Stack<IStmCompositeTransaction>> threadTransactions = new ConcurrentDictionary<int, Stack<IStmCompositeTransaction>>();
+    static ConcurrentDictionary<int, Stack<IStmTransaction>> threadTransactions = new ConcurrentDictionary<int, Stack<IStmTransaction>>();
 
-    static private IStmCompositeTransaction CreateNewTransaction()
+    static private IStmTransaction CreateNewTransaction()
     {
       return new StmTransaction();
     }
@@ -37,15 +37,15 @@ namespace Labs_5_STM
       }
     }
 
-    public static void NotifyBeginTransaction(IStmCompositeTransaction transaction)
+    public static void NotifyBeginTransaction(IStmTransaction transaction)
     {
-      var stackTransaction = threadTransactions.GetOrAdd(CurrentThreadId, new Stack<IStmCompositeTransaction>());
+      var stackTransaction = threadTransactions.GetOrAdd(CurrentThreadId, new Stack<IStmTransaction>());
       stackTransaction.Push(transaction);
     }
 
     public static void NotifyEndTransaction(IEnumerable<KeyValuePair<IStmRef, StmRefSavedState>> commitKeyValues)
     {
-      Stack<IStmCompositeTransaction> stackTransaction;
+      Stack<IStmTransaction> stackTransaction;
       threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction);
       stackTransaction.Pop();
       if (stackTransaction.Count != 0)
@@ -75,7 +75,7 @@ namespace Labs_5_STM
 
     public static void RegisterStmOperation(IStmRef sourse, IStmRef oldStmRef, IStmRef newStmRef = null)
     {
-      Stack<IStmCompositeTransaction> stackTransaction;
+      Stack<IStmTransaction> stackTransaction;
       threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction);
       stackTransaction.Peek().TryAddComponent(sourse, new StmRefSavedState(oldStmRef, newStmRef));
     }

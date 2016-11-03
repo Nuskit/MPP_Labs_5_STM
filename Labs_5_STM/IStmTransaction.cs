@@ -12,5 +12,6 @@ namespace Labs_5_STM
     void Commit();
     void Rollback();
     void TryAddComponent(IStmRef stmRef, StmRefSavedState stmRefSavedState);
+    bool IsCorrectnessTransaction();
   }
 }
