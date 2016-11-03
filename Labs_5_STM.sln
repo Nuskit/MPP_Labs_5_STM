@@ -5,6 +5,11 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Labs_5_STM", "Labs_5_STM\Labs_5_STM.csproj", "{6C11613D-5118-489A-B562-8075F355213F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Labs_5_STM_Test", "Labs_5_STM_Test\Labs_5_STM_Test.csproj", "{F1B9D51E-4293-47D0-8023-960DECC6F89E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6C11613D-5118-489A-B562-8075F355213F} = {6C11613D-5118-489A-B562-8075F355213F}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +20,10 @@ Global
 		{6C11613D-5118-489A-B562-8075F355213F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C11613D-5118-489A-B562-8075F355213F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C11613D-5118-489A-B562-8075F355213F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1B9D51E-4293-47D0-8023-960DECC6F89E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1B9D51E-4293-47D0-8023-960DECC6F89E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1B9D51E-4293-47D0-8023-960DECC6F89E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1B9D51E-4293-47D0-8023-960DECC6F89E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
