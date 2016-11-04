@@ -78,8 +78,8 @@ namespace Labs_5_STM
     public static void RegisterStmOperation(IStmRef sourse, IStmRef oldStmRef, IStmRef newStmRef = null)
     {
       Stack<IStmTransaction> stackTransaction;
-      threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction);
-      stackTransaction.Peek().TryAddComponent(sourse, new StmRefSavedState(oldStmRef, newStmRef));
+      if (threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction))
+        stackTransaction.Peek().TryAddComponent(sourse, new StmRefSavedState(oldStmRef, newStmRef));
     }
   }
 }
