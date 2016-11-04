@@ -16,10 +16,15 @@ namespace Labs_5_STM
       this.NextStmRef = nextStmRef ?? saveStmRef;
       this.SaveStmRef = saveStmRef;
     }
+
+    public override string ToString()
+    {
+      return String.Format("Save {0}, New {1}", SaveStmRef.ToString(), NextStmRef.ToString());
+    }
   }
 
   public class StmRef<T> : IStmRef
-    where T : struct
+    //where T : struct
   {
     private T value;
 
@@ -75,14 +80,9 @@ namespace Labs_5_STM
       return true;
     }
 
-    public override int GetHashCode()
-    {
-      return base.GetHashCode() + 7 * value.GetHashCode();
-    }
-
     public override string ToString()
     {
-      return String.Format("Current value {0}.", value.ToString());
+      return String.Format("value {0}", value.ToString());
     }
   }
 }

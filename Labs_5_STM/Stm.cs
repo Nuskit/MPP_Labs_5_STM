@@ -26,7 +26,7 @@ namespace Labs_5_STM
 
     static private IStmTransaction CreateNewTransaction()
     {
-      return new StmTransaction();
+      return new LoggerStmTransaction(new StmTransaction());
     }
 
     private static int CurrentThreadId
@@ -61,6 +61,8 @@ namespace Labs_5_STM
     {
       bool isCompleteTransaction = false;
       var transaction = CreateNewTransaction();
+
+      NotifyBeginTransaction(transaction);
       transaction.Begin();
       do
       {

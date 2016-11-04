@@ -22,7 +22,8 @@ namespace Labs_5_STM
 
     public void Begin()
     {
-      Stm.NotifyBeginTransaction(this);
+      //not logger
+      //Stm.NotifyBeginTransaction(this);
     }
 
     public void Commit()
@@ -45,8 +46,27 @@ namespace Labs_5_STM
     public void Rollback()
     {
       foreach (var component in components)
-        component.Key.SetAsObject(component.Value);
+      {
+        component.Key.SetAsObject(FindFirstСollisionOrFirst(component.Value).SaveStmRef.GetAsObject());
+      }
       ClearComponents();
+    }
+
+    private StmRefSavedState FindFirstСollisionOrFirst(Queue<StmRefSavedState> savedState)
+    {
+      bool isFoundCollision=false;
+      StmRefSavedState lastSavedState = savedState.First();
+      foreach (var currentSavedState in savedState.Skip(1))
+      {
+        if (currentSavedState.SaveStmRef.Equals(lastSavedState.NextStmRef))
+          lastSavedState = currentSavedState;
+        else
+        {
+          isFoundCollision = true;
+          break;
+        }
+      }
+      return isFoundCollision?lastSavedState:savedState.First();
     }
 
     public bool IsCorrectnessTransaction()
