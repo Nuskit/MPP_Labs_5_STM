@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Labs_5_STM
 {
-
   public class StmTransaction : IStmTransaction
   {
     private Dictionary<IStmRef, Queue<StmRefSavedState>> components = new Dictionary<IStmRef, Queue<StmRefSavedState>>();
@@ -22,7 +18,7 @@ namespace Labs_5_STM
 
     public void Begin()
     {
-      //not logger
+      //not can checking decorator
       //Stm.NotifyBeginTransaction(this);
     }
 
@@ -58,13 +54,12 @@ namespace Labs_5_STM
       StmRefSavedState lastSavedState = savedState.First();
       foreach (var currentSavedState in savedState.Skip(1))
       {
-        if (currentSavedState.SaveStmRef.Equals(lastSavedState.NextStmRef))
-          lastSavedState = currentSavedState;
-        else
-        {
+        if (!currentSavedState.SaveStmRef.Equals(lastSavedState.NextStmRef))
           isFoundCollision = true;
+
+        lastSavedState = currentSavedState;
+        if (isFoundCollision)
           break;
-        }
       }
       return isFoundCollision?lastSavedState:savedState.First();
     }

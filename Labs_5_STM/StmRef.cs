@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Labs_5_STM
 {
@@ -24,16 +20,14 @@ namespace Labs_5_STM
   }
 
   public class StmRef<T> : IStmRef
-    //where T : struct
+  //where T : struct
   {
     private T value;
 
-    public StmRef(T value)
+    public StmRef(T value = default(T))
     {
       this.value = value;
     }
-
-    public StmRef() { }
 
     public object Clone()
     {
@@ -59,7 +53,7 @@ namespace Labs_5_STM
       if (value is T)
         this.value = (T)value;
       else
-        throw new ArgumentException("Error value type");
+        throw new InvalidCastException("Error value type in SetAsObject");
     }
 
     public object GetAsObject()

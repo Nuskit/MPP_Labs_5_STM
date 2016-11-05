@@ -50,8 +50,9 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="StmTransactionTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestStmTransaction.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Labs_5_STM\Labs_5_STM.csproj">

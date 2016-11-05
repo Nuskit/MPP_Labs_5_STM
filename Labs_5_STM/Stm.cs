@@ -10,18 +10,6 @@ namespace Labs_5_STM
 {
   public static class Stm
   {
-    class ThreadInformation
-    {
-      public ThreadInformation(Action operation, int? parentThreadOperation = null)
-      {
-        this.Operation = operation;
-        this.ParentThreadOperation = parentThreadOperation;
-      }
-
-      public Action Operation { get; set; }
-      public int? ParentThreadOperation { get; set; }
-    }
-    
     static ConcurrentDictionary<int, Stack<IStmTransaction>> threadTransactions = new ConcurrentDictionary<int, Stack<IStmTransaction>>();
 
     static private IStmTransaction CreateNewTransaction()
@@ -46,21 +34,23 @@ namespace Labs_5_STM
     public static void NotifyEndTransaction(IEnumerable<KeyValuePair<IStmRef, StmRefSavedState>> commitKeyValues)
     {
       Stack<IStmTransaction> stackTransaction;
-      threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction);
-      stackTransaction.Pop();
-      if (stackTransaction.Count != 0)
+      if (threadTransactions.TryGetValue(CurrentThreadId, out stackTransaction))
       {
-        foreach (var commitBlock in commitKeyValues)
-          stackTransaction.Peek().TryAddComponent(commitBlock.Key, commitBlock.Value);
+        stackTransaction.Pop();
+        if (stackTransaction.Count != 0)
+        {
+          foreach (var commitBlock in commitKeyValues)
+            stackTransaction.Peek().TryAddComponent(commitBlock.Key, commitBlock.Value);
+        }
+        else
+          threadTransactions.TryRemove(CurrentThreadId, out stackTransaction);
       }
-      else
-        threadTransactions.TryRemove(CurrentThreadId, out stackTransaction);
     }
 
-    public static void Do(Action operation)
+    public static void Do(Action operation, IStmTransaction stmTransaction = null)
     {
       bool isCompleteTransaction = false;
-      var transaction = CreateNewTransaction();
+      var transaction = stmTransaction ?? CreateNewTransaction();
 
       NotifyBeginTransaction(transaction);
       transaction.Begin();
