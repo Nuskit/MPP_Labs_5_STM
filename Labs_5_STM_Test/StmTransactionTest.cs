@@ -123,5 +123,34 @@ namespace Labs_5_STM_Test
         && (testStmTransaciton[1].stmTransactionInformation.CallRollBack == 0)
         );
     }
+
+    [TestMethod]
+    public void TestCallThreadStmInStm()
+    {
+      int recursiveCall = 0;
+      var variable = new StmRef<int>();
+      var taskFirst = Task.Run(() =>
+      {
+        Stm.Do(() =>
+        {
+          variable.Set(1);
+          var taskSecond = Task.Run(() =>
+           {
+             Stm.Do(() =>
+             {
+               variable.Set(2);
+             });
+           });
+          //need to create last task in new thread
+          Thread.Sleep(1);
+          if (++recursiveCall > 1000)
+            Assert.Fail("Recursive call");
+          taskSecond.Wait();
+          variable.Get();
+        });
+      });
+      taskFirst.Wait();
+      Assert.IsTrue(variable.Get() == 2);
+    }
   }
 }
