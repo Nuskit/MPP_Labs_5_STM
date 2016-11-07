@@ -4,9 +4,9 @@ namespace Labs_5_STM
 {
   public class StmRefSavedState
   {
-    public IStmRef SaveStmRef { get; set; }
-    public IStmRef NextStmRef { get; set; }
-
+    public IStmRef SaveStmRef { get; private set; }
+    public IStmRef NextStmRef { get; private set; }
+    
     public StmRefSavedState(IStmRef saveStmRef, IStmRef nextStmRef)
     {
       this.NextStmRef = nextStmRef ?? saveStmRef;
@@ -19,32 +19,26 @@ namespace Labs_5_STM
     }
   }
 
-  public class StmRef<T> : IStmRef
-  //where T : struct
+  public class StmUnmanagedRef<T>: IStmRef
   {
-    private T value;
+    protected T value;
 
-    public StmRef(T value = default(T))
+    protected StmUnmanagedRef(T value)
     {
       this.value = value;
     }
 
-    public object Clone()
-    {
-      return new StmRef<T>(value);
-    }
-
     public T Get()
     {
-      var oldValue = this.Clone() as StmRef<T>;
+      var oldValue = this.StmUnmanagedClone() as StmUnmanagedRef<T>;
       Stm.RegisterStmOperation(this, oldValue);
       return oldValue.value;
     }
 
     public void Set(T value)
     {
-      var oldValue = this.Clone() as StmRef<T>;
-      Stm.RegisterStmOperation(this, oldValue, new StmRef<T>(value));
+      var oldValue = this.StmUnmanagedClone() as StmUnmanagedRef<T>;
+      Stm.RegisterStmOperation(this, oldValue, new StmUnmanagedRef<T>(value));
       this.value = value;
     }
 
@@ -65,10 +59,10 @@ namespace Labs_5_STM
     {
       if (ReferenceEquals(this, value))
         return true;
-      if (!(value is StmRef<T>))
+      if (!(value is StmUnmanagedRef<T>))
         return false;
 
-      StmRef<T> stmRef = value as StmRef<T>;
+      StmUnmanagedRef<T> stmRef = value as StmUnmanagedRef<T>;
       if (!this.value.Equals(stmRef.value))
         return false;
       return true;
@@ -77,6 +71,42 @@ namespace Labs_5_STM
     public override string ToString()
     {
       return String.Format("value {0}", value.ToString());
+    }
+
+    public object StmUnmanagedClone()
+    {
+      return new StmUnmanagedRef<T>(value);
+    }
+  }
+
+  public class StmRef<T> : StmUnmanagedRef<T>, IDisposable
+  //where T : struct
+  {
+    public StmRef(T value = default(T)) : base(value)
+    {
+      Stm.RegisterRef(this);
+    }
+
+    private bool disposedValue = false;
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!disposing)
+      {
+        Stm.UnregisterRef(this);
+        disposedValue = true;
+      }
+    }
+
+    ~StmRef()
+    {
+      Dispose(false);
+    }
+
+    public void Dispose()
+    {
+      Dispose(disposedValue);
+      GC.SuppressFinalize(this);
     }
   }
 }

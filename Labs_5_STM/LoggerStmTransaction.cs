@@ -19,16 +19,10 @@ namespace Labs_5_STM
       stmTransaction.Begin();
     }
 
-    public void Commit()
+    public bool TryCommit()
     {
-      Console.WriteLine(String.Format("In thread {0}, id {1} commit transaction.", System.Threading.Thread.CurrentThread.ManagedThreadId, idTransaction));
-      stmTransaction.Commit();
-    }
-
-    public bool IsCorrectnessTransaction()
-    {
-      Console.WriteLine(String.Format("in thread {0}, id {1} check correctness transaction.", System.Threading.Thread.CurrentThread.ManagedThreadId, idTransaction));
-      return stmTransaction.IsCorrectnessTransaction();
+      Console.WriteLine(String.Format("In thread {0}, id {1} try commit transaction.", System.Threading.Thread.CurrentThread.ManagedThreadId, idTransaction));
+      return stmTransaction.TryCommit();
     }
 
     public void Rollback()

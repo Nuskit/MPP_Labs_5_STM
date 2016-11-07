@@ -3,9 +3,8 @@
   public interface IStmTransaction
   {
     void Begin();
-    void Commit();
+    bool TryCommit();
     void Rollback();
     void TryAddComponent(IStmRef stmRef, StmRefSavedState stmRefSavedState);
-    bool IsCorrectnessTransaction();
   }
 }

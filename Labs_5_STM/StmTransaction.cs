@@ -5,9 +5,21 @@ namespace Labs_5_STM
 {
   public class StmTransaction : IStmTransaction
   {
-    private Dictionary<IStmRef, Queue<StmRefSavedState>> components = new Dictionary<IStmRef, Queue<StmRefSavedState>>();
+    private Dictionary<IStmRef, Queue<StmRefSavedState>> components;
+    private bool isNestedTransaction;
+
+    public StmTransaction(bool isNestedTransaction=false)
+    {
+      this.isNestedTransaction = isNestedTransaction;
+      components = new Dictionary<IStmRef, Queue<StmRefSavedState>>();
+    }
 
     public void TryAddComponent(IStmRef stmRef, StmRefSavedState stmRefSavedState)
+    {
+      AddComponent(stmRef, stmRefSavedState);
+    }
+
+    private void AddComponent(IStmRef stmRef, StmRefSavedState stmRefSavedState)
     {
       Queue<StmRefSavedState> refSavedState;
       if (components.TryGetValue(stmRef, out refSavedState))
@@ -22,7 +34,7 @@ namespace Labs_5_STM
       //Stm.NotifyBeginTransaction(this);
     }
 
-    public void Commit()
+    private void SaveCommit()
     {
       Stm.NotifyEndTransaction(components.Select(x => new KeyValuePair<IStmRef, StmRefSavedState>(x.Key, GetCommitValue(x.Key))));
       ClearComponents();
@@ -43,16 +55,22 @@ namespace Labs_5_STM
     {
       foreach (var component in components)
       {
-        component.Key.SetAsObject(FindFirstСollisionOrFirst(component.Value).SaveStmRef.GetAsObject());
+        component.Key.SetAsObject(FindFirstСollisionOrGetLastCommitSavedState(component).GetAsObject());
       }
       ClearComponents();
+      GiveOtherThreadTimeCompleteTransaction();
     }
 
-    private StmRefSavedState FindFirstСollisionOrFirst(Queue<StmRefSavedState> savedState)
+    private void GiveOtherThreadTimeCompleteTransaction()
     {
-      bool isFoundCollision=false;
-      StmRefSavedState lastSavedState = savedState.First();
-      foreach (var currentSavedState in savedState.Skip(1))
+      System.Threading.Thread.Sleep(0);
+    }
+
+    private IStmRef FindFirstСollisionOrGetLastCommitSavedState(KeyValuePair<IStmRef, Queue<StmRefSavedState>> stmSavedState)
+    {
+      bool isFoundCollision = false;
+      StmRefSavedState lastSavedState = stmSavedState.Value.First();
+      foreach (var currentSavedState in stmSavedState.Value.Skip(1))
       {
         if (!currentSavedState.SaveStmRef.Equals(lastSavedState.NextStmRef))
           isFoundCollision = true;
@@ -61,15 +79,56 @@ namespace Labs_5_STM
         if (isFoundCollision)
           break;
       }
-      return isFoundCollision?lastSavedState:savedState.First();
+
+      return isFoundCollision ? lastSavedState.SaveStmRef : Stm.GetLastCommitState(stmSavedState.Key).NextStmRef;
     }
 
-    public bool IsCorrectnessTransaction()
+    private bool IsLinearChanges()
     {
       foreach (var component in components.Values)
         if (!isCorrectStmRef(component))
+        {
           return false;
+        }
       return true;
+    }
+
+    private KeyValuePair<IStmRef, StmRefSavedState> GetFirstStmRefPair(IStmRef key,Queue<StmRefSavedState> value)
+    {
+      return new KeyValuePair<IStmRef, StmRefSavedState>(key,value.First());
+    }
+
+    public bool TryCommit()
+    {
+      bool isCorrectCommit = IsLinearChanges();
+      if (isCorrectCommit)
+      {
+        lock (Stm.commitLock)
+        {
+          isCorrectCommit = TryCompleteCorrectCommit(isCorrectCommit);
+          if (isCorrectCommit)
+            SaveCommit();
+        }
+      }
+      return isCorrectCommit;
+    }
+
+    private bool TryCompleteCorrectCommit(bool isCorrectCommit)
+    {
+      if (!isNestedTransaction)
+        foreach (var component in components)
+          if (!IsSyncronizeWithLastCommit(GetFirstStmRefPair(component.Key, component.Value)))
+          {
+            isCorrectCommit = false;
+            break;
+          }
+
+      return isCorrectCommit;
+    }
+
+    private bool IsSyncronizeWithLastCommit(KeyValuePair<IStmRef, StmRefSavedState> keyValuePair)
+    {
+      return Stm.IsSyncronizeWithLastCommit(keyValuePair);
     }
 
     private bool isCorrectStmRef(Queue<StmRefSavedState> refSavedStates)

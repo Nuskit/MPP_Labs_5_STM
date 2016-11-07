@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="IStmRef.cs" />
     <Compile Include="IStmTransaction.cs" />
+    <Compile Include="IStmUmanagedClone.cs" />
     <Compile Include="LoggerStmTransaction.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

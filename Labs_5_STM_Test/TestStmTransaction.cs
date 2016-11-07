@@ -24,14 +24,9 @@ namespace Labs_5_STM_Test
       stmTransation.Begin();
     }
 
-    public void Commit()
+    public bool TryCommit()
     {
-      stmTransation.Commit();
-    }
-
-    public bool IsCorrectnessTransaction()
-    {
-      return stmTransation.IsCorrectnessTransaction();
+      return stmTransation.TryCommit();
     }
 
     public void Rollback()
